@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>狐斋志异 · 站点公告</title>
+<style>
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; max-width: 640px;
+       margin: 40px auto; padding: 0 16px; line-height: 1.6; color: #222; }
+h1 { font-size: 1.4em; margin-bottom: 4px; }
+.subtitle { color: #666; font-size: 0.9em; margin-bottom: 8px; }
+.cross-link { margin: 4px 0 24px; font-size: 0.9em; }
+.entry { border-bottom: 1px solid #ddd; padding: 12px 0; }
+.entry:last-child { border-bottom: none; }
+.time { color: #888; font-size: 0.85em; }
+.type { display: inline-block; background: #eee; color: #555; border-radius: 4px; padding: 1px 8px;
+        font-size: 0.8em; margin-left: 8px; }
+.type.type-incident { background: #fbe6e6; color: #b3261e; }
+.type.type-maintenance { background: #fff4e0; color: #8a5a00; }
+.type.type-recovery { background: #e3f6e9; color: #1a7f3c; }
+.empty { color: #888; }
+.lang-toggle {
+  position: fixed; top: 12px; right: 12px; z-index: 100;
+  display: inline-block; font-size: 0.85em;
+  background: rgba(255,255,255,0.92); padding: 4px 10px; border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.lang-toggle button {
+  background: none; border: none; padding: 2px 4px; cursor: pointer;
+  color: #999; font-size: 1em; font-family: inherit;
+}
+.lang-toggle button.active { color: #1a73e8; font-weight: bold; }
+@media (max-width: 480px) {
+  .lang-toggle { top: 8px; right: 8px; font-size: 0.75em; padding: 3px 8px; }
+}
+</style>
+</head>
+<body>
+<div class="lang-toggle">
+  <button type="button" data-lang-btn="zh" aria-label="切换到中文">中</button> / <button type="button" data-lang-btn="en" aria-label="Switch to English">EN</button>
+</div>
+<h1>狐斋志异 · 站点公告</h1>
+<div class="subtitle">update.foxzen.me &mdash; <span data-i18n="update_subtitle">最近发生了什么</span></div>
+<p class="cross-link"><a href="https://status.foxzen.me/" data-i18n="view_status_link">查看当前平台状态 →</a></p>
+<p class="empty" style="display:block" data-i18n="no_announcements">目前没有公告。</p>
+
+<script>
+(function () {
+  "use strict";
+  // 全站UI国际化：跟fetch_blog.py::I18N_BLOCK等其它几份独立实现同一套
+  // localStorage key/检测算法/data-i18n约定，这是第七份独立实现（这个
+  // 页面是generate_status_page.py单独生成的自包含文件，不依赖build_status_
+  // page.py或任何前端JS文件）。只翻译页面UI标签(标题/副标题/链接/空状态
+  // 提示)，里的实际公告内容(time/type/message，来自GreenCloud
+  // 服务器上手工维护的data/announcements.txt)永远不套用data-i18n、永远
+  // 保持原文——这是这个页面最核心的一条边界，任何"看起来像公告"的文字
+  // 都不会被这段脚本触碰，因为它只认data-i18n属性，公告内容本身从来
+  // 没有也不会被打上这个属性。
+  var UPDATE_STRINGS = {
+    zh: { update_subtitle: "最近发生了什么", view_status_link: "查看当前平台状态 →", no_announcements: "目前没有公告。" },
+    en: { update_subtitle: "what's happened recently", view_status_link: "View current platform status →", no_announcements: "No announcements at this time." },
+  };
+  var STORAGE_KEY = "foxzen_lang";
+
+  function detectDefaultLang() {
+    var langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ""];
+    for (var i = 0; i < langs.length; i++) {
+      if (/^zh/i.test(langs[i])) return "zh";
+    }
+    return "en";
+  }
+
+  function getLang() {
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === "zh" || saved === "en") return saved;
+    } catch (e) {}
+    return detectDefaultLang();
+  }
+
+  function applyLang(lang) {
+    var dict = UPDATE_STRINGS[lang] || UPDATE_STRINGS.en;
+    var nodes = document.querySelectorAll("[data-i18n]");
+    for (var i = 0; i < nodes.length; i++) {
+      var key = nodes[i].getAttribute("data-i18n");
+      if (dict[key] !== undefined) nodes[i].textContent = dict[key];
+    }
+    document.documentElement.setAttribute("lang", lang === "zh" ? "zh-CN" : "en");
+    var btns = document.querySelectorAll("[data-lang-btn]");
+    for (var j = 0; j < btns.length; j++) {
+      if (btns[j].getAttribute("data-lang-btn") === lang) btns[j].classList.add("active");
+      else btns[j].classList.remove("active");
+    }
+  }
+
+  function setLang(lang) {
+    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+    applyLang(lang);
+  }
+
+  var toggleBtns = document.querySelectorAll("[data-lang-btn]");
+  for (var k = 0; k < toggleBtns.length; k++) {
+    toggleBtns[k].addEventListener("click", function (e) {
+      setLang(e.currentTarget.getAttribute("data-lang-btn"));
+    });
+  }
+
+  applyLang(getLang());
+})();
+</script>
+</body>
+</html>
